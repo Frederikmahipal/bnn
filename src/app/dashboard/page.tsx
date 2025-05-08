@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { DocumentRecord } from '@/types/document';
 import { useDocuments } from '@/hooks/useDocuments';
 import { DocumentList } from '@/components/DocumentList/DocumentList';
@@ -18,6 +18,11 @@ export default function Dashboard() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletingDocument, setDeletingDocument] = useState<DocumentRecord | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState('');
+
+  // Initialize filtered documents with all documents
+  useEffect(() => {
+    setFilteredDocuments(documents);
+  }, [documents]);
 
   const handleDocumentSubmit = async (formData: FormData) => {
     setUploading(true);
@@ -123,7 +128,7 @@ export default function Dashboard() {
         )}
 
         <DocumentList
-          documents={filteredDocuments.length > 0 ? filteredDocuments : documents}
+          documents={filteredDocuments}
           expandedDocuments={expandedDocuments}
           onToggleExpand={toggleDocumentExpand}
           onEdit={openEditDocumentModal}

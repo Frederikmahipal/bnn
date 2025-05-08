@@ -7,6 +7,13 @@ export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
+  if (!params?.id) {
+    return NextResponse.json(
+      { error: 'File ID is required' },
+      { status: 400 }
+    );
+  }
+
   try {
     await connectDB();
 
@@ -19,8 +26,10 @@ export async function GET(
       bucketName: 'files'
     });
 
+    const fileId = new mongoose.Types.ObjectId(params.id);
+
     // Get file metadata first
-    const files = await bucket.find({ _id: new mongoose.Types.ObjectId(params.id) }).toArray();
+    const files = await bucket.find({ _id: fileId }).toArray();
     
     if (files.length === 0) {
       return NextResponse.json(
@@ -30,9 +39,7 @@ export async function GET(
     }
 
     const file = files[0];
-    const downloadStream = bucket.openDownloadStream(
-      new mongoose.Types.ObjectId(params.id)
-    );
+    const downloadStream = bucket.openDownloadStream(fileId);
 
     const chunks: Buffer[] = [];
 

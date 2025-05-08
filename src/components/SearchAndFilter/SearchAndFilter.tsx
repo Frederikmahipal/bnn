@@ -36,17 +36,30 @@ export function SearchAndFilter({ documents, onFilterChange }: SearchAndFilterPr
 
   // Filter documents based on search term and selected tags
   useEffect(() => {
+    const searchTermTrimmed = searchTerm.trim().toLowerCase();
+
     const filtered = documents.filter(doc => {
-      const matchesSearch = searchTerm === '' || 
-        doc.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (doc.description?.toLowerCase().includes(searchTerm.toLowerCase())) ||
-        (doc.price?.toString().includes(searchTerm)) ||
-        (doc.documentDate && new Date(doc.documentDate).toLocaleDateString().includes(searchTerm));
+      // Handle search term matching
+      if (searchTermTrimmed) {
+        const titleMatch = doc.title.toLowerCase().includes(searchTermTrimmed);
+        const descMatch = doc.description?.toLowerCase().includes(searchTermTrimmed) || false;
+        const priceMatch = doc.price?.toString().toLowerCase().includes(searchTermTrimmed) || false;
+        const dateMatch = doc.documentDate ? 
+          new Date(doc.documentDate).toLocaleDateString().toLowerCase().includes(searchTermTrimmed) : 
+          false;
+        const tagMatch = doc.tags.some(tag => tag.toLowerCase().includes(searchTermTrimmed));
 
-      const matchesTags = selectedTags.length === 0 || 
-        selectedTags.every(tag => doc.tags.includes(tag));
+        if (!(titleMatch || descMatch || priceMatch || dateMatch || tagMatch)) {
+          return false;
+        }
+      }
 
-      return matchesSearch && matchesTags;
+      // Handle tag filtering
+      if (selectedTags.length > 0) {
+        return selectedTags.every(tag => doc.tags.includes(tag));
+      }
+
+      return true;
     });
 
     onFilterChange(filtered);
