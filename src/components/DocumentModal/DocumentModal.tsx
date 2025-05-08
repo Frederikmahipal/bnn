@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { DocumentData, DocumentRecord } from '@/types/document';
 import { TagSelector } from '@/components/TagSelector/TagSelector';
+import { PriceInput } from '@/components/PriceInput/PriceInput';
 
 interface DocumentModalProps {
   isOpen: boolean;
@@ -121,13 +122,10 @@ export function DocumentModal({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Price
             </label>
-            <input
-              type="number"
+            <PriceInput
               value={documentData.price}
-              onChange={(e) => setDocumentData({ ...documentData, price: e.target.value })}
+              onChange={(value) => setDocumentData({ ...documentData, price: value })}
               className="w-full px-3 py-2 border text-black border-gray-300 rounded-md"
-              min="0"
-              step="0.01"
             />
           </div>
           <div>

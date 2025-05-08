@@ -19,8 +19,9 @@ export async function GET(
       bucketName: 'files'
     });
 
-    // First, get the file metadata
+    // Get file metadata first
     const files = await bucket.find({ _id: new mongoose.Types.ObjectId(params.id) }).toArray();
+    
     if (files.length === 0) {
       return NextResponse.json(
         { error: 'File not found' },
@@ -34,20 +35,32 @@ export async function GET(
     );
 
     const chunks: Buffer[] = [];
-    for await (const chunk of downloadStream) {
-      chunks.push(chunk);
-    }
 
-    const buffer = Buffer.concat(chunks);
-    const headers = new Headers();
-    headers.set('Content-Type', file.metadata?.contentType || 'application/octet-stream');
-    headers.set('Content-Disposition', `inline; filename="${file.filename}"`);
+    // Wait for the stream to complete
+    await new Promise((resolve, reject) => {
+      downloadStream.on('data', (chunk) => chunks.push(Buffer.from(chunk)));
+      downloadStream.on('error', reject);
+      downloadStream.on('end', resolve);
+    });
 
-    return new NextResponse(buffer, { headers });
+    // Combine chunks into a single buffer
+    const fileData = Buffer.concat(chunks);
+
+    // Get the content type from metadata or file info
+    const contentType = file.metadata?.contentType || file.contentType || 'application/octet-stream';
+
+    // Create response with appropriate headers
+    const headers = new Headers({
+      'Content-Type': contentType,
+      'Content-Disposition': 'inline',
+      'Cache-Control': 'public, max-age=31536000'
+    });
+
+    return new NextResponse(fileData, { headers });
   } catch (error) {
-    console.error('File download error:', error);
+    console.error('Download error:', error);
     return NextResponse.json(
-      { error: 'Error downloading file' },
+      { error: error instanceof Error ? error.message : 'Error downloading file' },
       { status: 500 }
     );
   }

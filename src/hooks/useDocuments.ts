@@ -1,92 +1,82 @@
-import { useState, useEffect } from 'react';
-import { DocumentRecord, DocumentData } from '@/types/document';
+import { useState, useEffect, useCallback } from 'react';
+import { DocumentRecord } from '@/types/document';
 
 export function useDocuments() {
   const [documents, setDocuments] = useState<DocumentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchDocuments = async () => {
+  const fetchDocuments = useCallback(async (searchTerm?: string, tags?: string[]) => {
     try {
-      const response = await fetch('/api/files');
+      setLoading(true);
+      const params = new URLSearchParams();
+      
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+      
+      if (tags?.length) {
+        tags.forEach(tag => params.append('tags', tag));
+      }
+
+      const queryString = params.toString();
+      const url = `/api/documents${queryString ? `?${queryString}` : ''}`;
+      
+      const response = await fetch(url);
       if (!response.ok) {
         throw new Error('Failed to fetch documents');
       }
+      
       const data = await response.json();
       setDocuments(data);
+      setError('');
     } catch (err) {
       console.error('Error fetching documents:', err);
       setError('Error loading documents');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const saveDocument = async (
-    formData: FormData,
-    editingDocument: DocumentRecord | null
-  ) => {
-    try {
-      const url = editingDocument 
-        ? `/api/files/${editingDocument._id}` 
-        : '/api/upload';
+  const saveDocument = async (formData: FormData, editingDocument: DocumentRecord | null) => {
+    const response = await fetch('/api/upload', {
+      method: 'POST',
+      body: formData,
+    });
 
-      const response = await fetch(url, {
-        method: editingDocument ? 'PATCH' : 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Save failed');
-      }
-
-      const savedDocument = await response.json();
-
-      setDocuments(prev => {
-        if (editingDocument) {
-          return prev.map(doc => 
-            doc._id === editingDocument._id ? savedDocument : doc
-          );
-        }
-        return [savedDocument, ...prev];
-      });
-
-      return savedDocument;
-    } catch (err) {
-      console.error('Save error:', err);
-      throw err;
+    if (!response.ok) {
+      throw new Error('Failed to save document');
     }
+
+    // Refresh the documents list
+    await fetchDocuments();
   };
 
-  const deleteDocument = async (documentId: string) => {
-    try {
-      const response = await fetch(`/api/files/${documentId}`, {
-        method: 'DELETE',
-      });
+  const deleteDocument = async (id: string) => {
+    const response = await fetch(`/api/documents/${id}`, {
+      method: 'DELETE',
+    });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Delete failed');
-      }
-
-      setDocuments(prev => prev.filter(doc => doc._id !== documentId));
-    } catch (err) {
-      console.error('Delete error:', err);
-      throw err;
+    if (!response.ok) {
+      throw new Error('Failed to delete document');
     }
+
+    // Refresh the documents list
+    await fetchDocuments();
   };
 
+  // Initial fetch
   useEffect(() => {
     fetchDocuments();
-  }, []);
+  }, [fetchDocuments]);
 
   return {
     documents,
     loading,
     error,
+    setError,
     saveDocument,
     deleteDocument,
-    setError
+    fetchDocuments
   };
 } 

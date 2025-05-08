@@ -38,11 +38,13 @@ const FileSchema = new mongoose.Schema<IFile>({
     type: String,
     required: [true, 'Please provide a title'],
     maxlength: [200, 'Title cannot be more than 200 characters'],
+    text: true // Enable text search
   },
   description: {
     type: String,
     maxlength: [1000, 'Description cannot be more than 1000 characters'],
     default: '',
+    text: true // Enable text search
   },
   tags: {
     type: [String],
@@ -91,6 +93,12 @@ const FileSchema = new mongoose.Schema<IFile>({
     }
   }
 });
+
+// Create indexes for better search performance
+FileSchema.index({ title: 'text', description: 'text' });
+FileSchema.index({ tags: 1 });
+FileSchema.index({ documentDate: 1 });
+FileSchema.index({ price: 1 });
 
 const FileModel = mongoose.model<IFile>('File', FileSchema);
 export default FileModel; 

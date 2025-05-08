@@ -1,5 +1,6 @@
 import { DocumentRecord } from '@/types/document';
 import { DocumentPreview } from './DocumentPreview';
+import { formatPrice } from '@/utils/format';
 
 interface DocumentItemProps {
   doc: DocumentRecord;
@@ -17,10 +18,10 @@ export function DocumentItem({
   onDelete 
 }: DocumentItemProps) {
   const formattedDocumentDate = doc.documentDate 
-    ? new Date(doc.documentDate).toLocaleDateString()
+    ? new Date(doc.documentDate).toLocaleDateString('da-DK')
     : null;
 
-  const formattedUploadDate = new Date(doc.createdAt).toLocaleDateString();
+  const formattedUploadDate = new Date(doc.createdAt).toLocaleDateString('da-DK');
 
   return (
     <div 
@@ -36,7 +37,7 @@ export function DocumentItem({
               <span>Document date: {formattedDocumentDate}</span>
             )}
             {doc.price && (
-              <span className="text-green-600">${doc.price}</span>
+              <span className="text-green-600">{formatPrice(doc.price)}</span>
             )}
           </div>
         </div>
@@ -127,6 +128,9 @@ export function DocumentItem({
                   <p>Uploaded: {formattedUploadDate}</p>
                   {formattedDocumentDate && (
                     <p>Document date: {formattedDocumentDate}</p>
+                  )}
+                  {doc.price && (
+                    <p>Price: {formatPrice(doc.price)}</p>
                   )}
                 </div>
               </div>

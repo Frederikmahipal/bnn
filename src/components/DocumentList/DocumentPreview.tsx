@@ -10,26 +10,27 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
   }
 
   return (
-    <a
-      href={document.attachment.url}
-      target="_blank"
-      rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
-      className="block w-full aspect-[3/4] bg-gray-50 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all"
-    >
+    <div className="block w-full aspect-[3/4] bg-gray-50 rounded-lg overflow-hidden hover:ring-2 hover:ring-blue-500 transition-all">
       {document.attachment.type.startsWith('image/') ? (
-        <img 
-          src={document.attachment.url} 
-          alt={document.title}
-          className="w-full h-full object-contain"
-        />
+        <a
+          href={document.attachment.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="block w-full h-full"
+        >
+          <img 
+            src={document.attachment.url} 
+            alt={document.title}
+            className="w-full h-full object-contain"
+          />
+        </a>
       ) : document.attachment.type.startsWith('application/pdf') ? (
         <iframe
-          src={`${document.attachment.url}#toolbar=0&navpanes=0&scrollbar=0&statusbar=0&messages=0&view=FitH`}
+          src={document.attachment.url}
           className="w-full h-full"
           title={document.title}
           style={{ 
-            pointerEvents: 'none',
             border: 'none',
             background: 'white'
           }}
@@ -39,6 +40,7 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
           src={document.attachment.url}
           controls
           className="w-full h-full"
+          onClick={(e) => e.stopPropagation()}
         >
           Your browser does not support the video tag.
         </video>
@@ -47,11 +49,18 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
           src={document.attachment.url}
           controls
           className="w-full mt-16"
+          onClick={(e) => e.stopPropagation()}
         >
           Your browser does not support the audio tag.
         </audio>
       ) : (
-        <div className="w-full h-full flex items-center justify-center">
+        <a
+          href={document.attachment.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="w-full h-full flex items-center justify-center"
+        >
           <div className="text-center">
             <svg 
               className="mx-auto h-12 w-12 text-gray-400" 
@@ -70,8 +79,8 @@ export function DocumentPreview({ document }: DocumentPreviewProps) {
               Click to view file
             </p>
           </div>
-        </div>
+        </a>
       )}
-    </a>
+    </div>
   );
 } 
