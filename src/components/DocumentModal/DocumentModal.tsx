@@ -19,6 +19,7 @@ export function DocumentModal({
   uploading
 }: DocumentModalProps) {
   const [attachedFile, setAttachedFile] = useState<File | null>(null);
+  const [removeExistingFile, setRemoveExistingFile] = useState(false);
   const [documentData, setDocumentData] = useState<DocumentData>({
     title: '',
     description: '',
@@ -30,6 +31,7 @@ export function DocumentModal({
   // Reset form data when modal opens or editingDocument changes
   useEffect(() => {
     if (isOpen) {
+      setRemoveExistingFile(false);
       if (editingDocument) {
         setDocumentData({
           title: editingDocument.title,
@@ -70,7 +72,10 @@ export function DocumentModal({
     e.preventDefault();
     
     const formData = new FormData();
-    formData.append('metadata', JSON.stringify(documentData));
+    formData.append('metadata', JSON.stringify({
+      ...documentData,
+      removeFile: removeExistingFile
+    }));
     
     if (attachedFile) {
       formData.append('file', attachedFile);
@@ -78,6 +83,7 @@ export function DocumentModal({
 
     await onSubmit(formData);
     setAttachedFile(null);
+    setRemoveExistingFile(false);
   };
 
   if (!isOpen) return null;
@@ -88,7 +94,7 @@ export function DocumentModal({
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Title 
+              Titel 
             </label>
             <input
               type="text"
@@ -100,7 +106,7 @@ export function DocumentModal({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
+              Beskrivelse
             </label>
             <textarea
               value={documentData.description}
@@ -120,7 +126,7 @@ export function DocumentModal({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
+              Pris
             </label>
             <PriceInput
               value={documentData.price}
@@ -130,8 +136,8 @@ export function DocumentModal({
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Document Date
-              <span className="text-gray-500 text-xs ml-1">(Optional - e.g., purchase date)</span>
+              Dato
+              <span className="text-gray-500 text-xs ml-1">(Valgfri - e.g., købsdato)</span>
             </label>
             <div className="flex items-center gap-2">
               <input
@@ -155,28 +161,45 @@ export function DocumentModal({
             <div className="flex items-center justify-between">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Attachment
+                  Fil
                 </label>
                 <p className="text-sm text-gray-500">
-                  {attachedFile ? attachedFile.name : editingDocument?.fileName 
+                  {attachedFile ? attachedFile.name : (!removeExistingFile && editingDocument?.fileName)
                     ? editingDocument.fileName 
-                    : 'No file attached'}
+                    : 'Ingen fil vedhæftet'}
                 </p>
               </div>
-              <label
-                className="cursor-pointer bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition-colors text-sm"
-              >
-                {attachedFile || editingDocument?.fileName ? 'Change File' : 'Attach File'}
-                <input
-                  type="file"
-                  onChange={handleFileAttachment}
-                  className="hidden text-black"
-                />
-              </label>
+              <div className="flex gap-2">
+                {(!removeExistingFile && (attachedFile || editingDocument?.fileName)) && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAttachedFile(null);
+                      setRemoveExistingFile(true);
+                    }}
+                    className="text-red-600 hover:text-red-700 text-sm px-2 py-1 rounded hover:bg-red-50 transition-colors"
+                  >
+                    Fjern fil
+                  </button>
+                )}
+                <label
+                  className="cursor-pointer bg-gray-200 text-gray-700 px-3 py-1 rounded hover:bg-gray-300 transition-colors text-sm"
+                >
+                  {attachedFile || (!removeExistingFile && editingDocument?.fileName) ? 'Ændre fil' : 'Vedhæft fil'}
+                  <input
+                    type="file"
+                    onChange={(e) => {
+                      handleFileAttachment(e);
+                      setRemoveExistingFile(false);
+                    }}
+                    className="hidden"
+                  />
+                </label>
+              </div>
             </div>
-            {editingDocument?.fileName && !attachedFile && (
+            {!removeExistingFile && editingDocument?.fileName && !attachedFile && (
               <p className="mt-2 text-xs text-gray-500">
-                Current file will be kept unless you choose a new one
+                Current file will be kept unless you remove or change it
               </p>
             )}
           </div>
@@ -189,14 +212,14 @@ export function DocumentModal({
               }}
               className="flex-1 px-4 py-2 border text-black border-gray-300 rounded-md hover:bg-gray-50"
             >
-              Cancel
+              Annuller  
             </button>
             <button
               type="submit"
               disabled={uploading}
               className="flex-1 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:bg-gray-400"
             >
-              {uploading ? 'Uploading...' : 'Save'}
+              {uploading ? 'Uploader...' : 'Gem'}
             </button>
           </div>
         </form>

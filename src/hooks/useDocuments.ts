@@ -39,8 +39,12 @@ export function useDocuments() {
   }, []);
 
   const saveDocument = async (formData: FormData, editingDocument: DocumentRecord | null) => {
-    const response = await fetch('/api/upload', {
-      method: 'POST',
+    const url = editingDocument 
+      ? `/api/files/${editingDocument._id}`
+      : '/api/upload';
+
+    const response = await fetch(url, {
+      method: editingDocument ? 'PATCH' : 'POST',
       body: formData,
     });
 
@@ -53,7 +57,7 @@ export function useDocuments() {
   };
 
   const deleteDocument = async (id: string) => {
-    const response = await fetch(`/api/documents/${id}`, {
+    const response = await fetch(`/api/files/${id}`, {
       method: 'DELETE',
     });
 

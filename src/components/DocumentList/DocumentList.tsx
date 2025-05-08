@@ -33,9 +33,6 @@ export function DocumentList({
           />
         </svg>
         <h3 className="mt-4 text-lg font-medium text-gray-900">No documents found</h3>
-        <p className="mt-2 text-sm text-gray-500">
-          Get started by creating a new document.
-        </p>
       </div>
     );
   }

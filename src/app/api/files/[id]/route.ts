@@ -94,7 +94,38 @@ export async function PATCH(
     const metadata = JSON.parse(metadataStr);
     let fileUrl: string | undefined;
 
-    // Handle file upload if a file is provided
+    // Get the current document to handle file removal
+    const currentDoc = await File.findById(params.id);
+    if (!currentDoc) {
+      return NextResponse.json(
+        { error: 'Document not found' },
+        { status: 404 }
+      );
+    }
+
+    // Handle file removal if requested
+    if (metadata.removeFile && currentDoc.attachment?.url) {
+      const db = mongoose.connection.db;
+      if (!db) {
+        throw new Error('Database connection not established');
+      }
+
+      const bucket = new mongoose.mongo.GridFSBucket(db, {
+        bucketName: 'files'
+      });
+
+      // Extract the file ID from the URL
+      const fileId = currentDoc.attachment.url.split('/').pop();
+      if (fileId) {
+        try {
+          await bucket.delete(new mongoose.Types.ObjectId(fileId));
+        } catch (error) {
+          console.error('Error deleting file from GridFS:', error);
+        }
+      }
+    }
+
+    // Handle new file upload if provided
     if (uploadedFile) {
       const db = mongoose.connection.db;
       if (!db) {
@@ -145,21 +176,37 @@ export async function PATCH(
       documentDate: metadata.documentDate ? new Date(metadata.documentDate) : new Date(),
     };
 
-    // If there's a new file, update the attachment
-    if (uploadedFile) {
-      updateData.fileName = uploadedFile.name;
-      updateData.attachment = {
-        name: uploadedFile.name,
-        type: uploadedFile.type,
-        size: uploadedFile.size,
-        url: fileUrl
-      };
-    }
-
     // Update the document
     const updatedDoc = await File.findByIdAndUpdate(
       params.id,
-      { $set: updateData },
+      metadata.removeFile 
+        ? { 
+            $set: {
+              title: metadata.title,
+              description: metadata.description || '',
+              tags: Array.isArray(metadata.tags) ? metadata.tags : [],
+              price: metadata.price ? parseFloat(metadata.price) : undefined,
+              documentDate: metadata.documentDate ? new Date(metadata.documentDate) : new Date(),
+            },
+            $unset: { 
+              fileName: "",
+              attachment: "" 
+            }
+          }
+        : { 
+            $set: {
+              ...updateData,
+              ...(uploadedFile && {
+                fileName: uploadedFile.name,
+                attachment: {
+                  name: uploadedFile.name,
+                  type: uploadedFile.type,
+                  size: uploadedFile.size,
+                  url: fileUrl
+                }
+              })
+            }
+          },
       { new: true, runValidators: true }
     );
 

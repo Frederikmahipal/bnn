@@ -12,6 +12,7 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
   const [newTagInput, setNewTagInput] = useState('');
   const [error, setError] = useState('');
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const { tags, createTag, refreshTags } = useTags();
 
   useEffect(() => {
@@ -32,8 +33,7 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
     onTagsChange(newSelectedTags);
   };
 
-  const handleCreateTag = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateTag = async () => {
     if (!newTagInput.trim()) return;
 
     try {
@@ -51,7 +51,7 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
       e.preventDefault();
-      handleCreateTag(e as unknown as React.FormEvent);
+      handleCreateTag();
     }
   };
 
@@ -93,18 +93,31 @@ export function TagSelector({ selectedTags, onTagsChange }: TagSelectorProps) {
       {isOpen && (
         <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
           <div className="p-2">
-            <form onSubmit={handleCreateTag} className="mb-2">
+            <div className="mb-2 flex gap-2">
               <input
+                ref={inputRef}
                 type="text"
                 value={newTagInput}
                 onChange={(e) => setNewTagInput(e.target.value)}
                 onKeyDown={handleKeyDown}
-                className="w-full px-2 py-1 border text-black border-gray-300 rounded text-sm"
+                className="flex-1 px-2 py-1 border text-black border-gray-300 rounded text-sm"
                 placeholder="Create new tag..."
                 onClick={(e) => e.stopPropagation()}
               />
-              {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
-            </form>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCreateTag();
+                }}
+                className="px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors"
+                disabled={!newTagInput.trim()}
+              >
+                Add
+              </button>
+            </div>
+            {error && <p className="text-red-500 text-xs mt-1 mb-2">{error}</p>}
 
             <div className="max-h-48 overflow-y-auto">
               {tags.length === 0 ? (
