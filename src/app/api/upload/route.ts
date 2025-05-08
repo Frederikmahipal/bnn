@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       description: metadata.description || '',
       tags: Array.isArray(metadata.tags) ? metadata.tags : [],
       price: metadata.price ? parseFloat(metadata.price) : undefined,
-      documentDate: metadata.documentDate ? new Date(metadata.documentDate) : new Date(),
+      documentDate: metadata.documentDate ? new Date(metadata.documentDate) : undefined,
       attachment: uploadedFile ? {
         name: uploadedFile.name,
         type: uploadedFile.type,
